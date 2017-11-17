@@ -14,19 +14,25 @@ let URLS:[(String,String)] = [
     ("Supérieur", "https://www.lemonde.fr/enseignement-superieur/rss_full.xml")
 ]
 
-class MasterViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MasterViewController: UIViewController, UITableViewDataSource, UITableViewDelegate,
+    UIPickerViewDelegate, UIPickerViewDataSource {
 
     @IBOutlet weak var waitLabel: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet weak var mainTable: UITableView!
     
+    @IBOutlet weak var selector: UIPickerView!
+    
     private var dataSource: [Item]!
     private var imgNews: [Data]!
+    private var storeObject: Store!
+    
+    var pickerData: [String] = [String]()
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         
-        let storeObject = Store(withRSSDataURL: URLS[0].1, parentCTRL: self)
+        self.storeObject = Store(withRSSDataURL: URLS[0].1, parentCTRL: self)
         
         storeObject.getData()
         self.dataSource = [Item]()
@@ -35,6 +41,13 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.selector.delegate = self
+        self.selector.dataSource = self
+        
+        for url in URLS {
+            pickerData.append(url.0)
+        }
+        
         // Do any additional setup after loading the view, typically from a nib.
         self.waitMessage(hidden: false, "Lecture du Flux RSS, merci de patienter ...")
         let nibFile = UINib(nibName: "NewsCell", bundle: .main)
@@ -131,7 +144,26 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     
+    //MARK: picker
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
     
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return pickerData.count
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        return pickerData[row]
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        self.storeObject = Store(withRSSDataURL: URLS[row].1, parentCTRL: self)
+        
+        storeObject.getData()
+        self.dataSource = [Item]()
+        self.imgNews = [Data!]()
+    }
 
 }
 
